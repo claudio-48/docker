@@ -124,3 +124,13 @@ echo ""
 
 # Execute
 docker compose ${COMPOSE_FILES} "$@"
+
+if [ "$1" == "down" ]; then
+    info "Fixing file permissions..."
+    echo "Dopo il down dei container occorre ripristinare la ownership"
+    echo "che postfix e nginx hanno impostato a root:root"
+    
+    sudo chown -R $USER:$USER nginx/ssl/ postfix/ secrets/
+    chmod 600 nginx/ssl/privkey.pem postfix/* secrets/*
+    chmod 644 nginx/ssl/fullchain.pem
+fi
