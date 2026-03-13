@@ -1,0 +1,66 @@
+# docker-compose.staging.yml - STAGING OVERRIDE
+#
+# Override configuration for staging environment
+# Staging is similar to production but with some relaxed settings for testing
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml up
+#   Or: ./compose.sh staging up
+
+services:
+
+  # ------------------------------------------------------------------
+  #  Database - Staging Settings
+  # ------------------------------------------------------------------
+  db:
+    restart: unless-stopped  # Less strict than prod
+    
+    ports:
+      - "127.0.0.1:5433:5432"  # Different port to avoid conflict with dev (5432)
+
+  # ------------------------------------------------------------------
+  #  Mail Relay - Staging Settings
+  # ------------------------------------------------------------------
+  mailrelay:
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  #  OpenACS - Staging Settings
+  # ------------------------------------------------------------------
+  alter-dev:
+    hostname: alter-dev-staging
+    restart: unless-stopped
+
+    # Staging: named volume like prod, but can switch to bind mount for testing
+    volumes:
+      - alter-dev_data:/var/www/openacs
+      - ./secrets:/run/secrets:ro
+      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
+      - /var/www/alter-dev/content-repository-fattura-elettronica:/var/www/openacs/content-repository-fattura-elettronica
+      - /var/www/alter-dev/content-repository-content-files:/var/www/openacs/content-repository-content-files
+      - /var/www/alter-dev/log:/var/www/openacs/log
+      - /var/www/alter-dev/www:/var/www/openacs/www
+      - ./config.tcl:${nsdconfig}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Staging: different port to avoid conflict with dev (8080)
+    ports:
+      - "127.0.0.1:8081:8080"
+
+    environment:
+      oacs_hostname: "staging.alter-web.it"  # Staging subdomain
+      system_pkgs: ""
+
+  # ------------------------------------------------------------------
+  #  Nginx - Staging Settings
+  # ------------------------------------------------------------------
+  nginx:
+    restart: unless-stopped
+    
+    # Staging: different ports to avoid conflict with dev/prod
+    ports:
+      - "8082:80"
+      - "8443:443"
+
+    environment:
+      SERVER_NAME: staging.alter-web.it 

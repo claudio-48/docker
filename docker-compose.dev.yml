@@ -1,0 +1,57 @@
+# docker-compose.dev.yml - DEVELOPMENT OVERRIDE
+#
+# Override configuration for development environment
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   Or: ./compose.sh dev up
+
+services:
+
+  # ------------------------------------------------------------------
+  #  Database - Development Settings
+  # ------------------------------------------------------------------
+  db:
+    restart: unless-stopped
+    
+    ports:
+      - "5432:5432"  # Expose for external tools (pgAdmin, DBeaver, etc.)
+
+  # ------------------------------------------------------------------
+  #  Mail Relay - Development Settings
+  # ------------------------------------------------------------------
+  mailrelay:
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  #  OpenACS - Development Settings
+  # ------------------------------------------------------------------
+  alter-dev:
+    hostname: alter-dev
+    restart: unless-stopped
+
+    # Development: bind mount for live code editing
+    volumes:
+      - /var/www/alter-dev:/var/www/openacs
+      - ./secrets:/run/secrets:ro
+      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
+      - /var/www/alter-dev/log:/var/www/openacs/log
+      - ./config.tcl:${nsdconfig}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Development: direct port access for debugging
+    # ports:
+    #   - "127.0.0.1:8080:8080"
+
+    environment:
+      oacs_hostname: alter-dev  # Simple hostname for dev
+      system_pkgs: ""  # No extra packages needed in dev
+
+  # ------------------------------------------------------------------
+  #  Nginx - Development Settings
+  # ------------------------------------------------------------------
+  nginx:
+    restart: unless-stopped
+
+    environment:
+      SERVER_NAME: alter-dev

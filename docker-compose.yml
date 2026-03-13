@@ -1,0 +1,195 @@
+# SPDX-License-Identifier: MPL-2.0
+#
+# docker-compose.yml - BASE CONFIGURATION
+# Common configuration for all environments (dev, staging, prod)
+#
+# Usage:
+#   Development:  docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   Staging:      docker compose -f docker-compose.yml -f docker-compose.staging.yml up
+#   Production:   docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+#
+# Or use helper script:
+#   ./compose.sh dev up
+#   ./compose.sh prod up
+
+x-default-env: &default-env
+  TZ: Europe/Rome
+
+x-db-env: &db-env
+  oacs_db_user: ${db_user}
+  oacs_db_host: ${db_host}
+  oacs_db_port: ${db_port}
+  oacs_db_passwordfile: /run/secrets/psql_password
+
+services:
+
+  # ------------------------------------------------------------------
+  #  PostgreSQL Database (Common)
+  # ------------------------------------------------------------------
+  db:
+    image: postgres:17.7
+    hostname: postgres
+
+    environment:
+      <<: *default-env
+      POSTGRES_PASSWORD_FILE: /run/secrets/psql_password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./secrets:/run/secrets:ro
+      - ./db-scripts:/docker-entrypoint-initdb.d:ro
+      - ./db-dumps:/backup
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    networks:
+      - oacs-network
+
+  # ------------------------------------------------------------------
+  #  Mail Relay - Postfix (Common)
+  # ------------------------------------------------------------------
+  mailrelay:
+    image: juanluisbaptiste/postfix:latest
+
+    volumes:
+      - ./postfix/sender_relay:/etc/postfix/sender_relay
+      - ./postfix/sasl_passwd:/etc/postfix/sasl_passwd
+      - ./postfix/main.cf:/etc/postfix/main.cf
+    
+    environment:
+      - SERVER_HOSTNAME=mail.oacs.localhost
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_TLS_SECURITY_LEVEL=encrypt
+      - SMTP_AUTHENTICATION=yes
+
+    command: >
+      sh -c "chown root:root /etc/postfix/sender_relay /etc/postfix/sasl_passwd &&
+             postmap lmdb:/etc/postfix/sender_relay &&
+             postmap lmdb:/etc/postfix/sasl_passwd &&
+             exec /run.sh"
+    
+    networks:
+      - oacs-network
+    
+    healthcheck:
+      test: ["CMD", "postfix", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ------------------------------------------------------------------
+  #  OpenACS Instance - alter-dev (Common)
+  # ------------------------------------------------------------------
+  alter-dev:
+    image: claudio48/alter:1.2
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    command: >
+      /bin/sh -c "
+        . /scripts/container-setup-openacs.sh \\
+        && /usr/local/ns/bin/nsd -i -t ${nsdconfig} -u nsadmin -g nsadmin
+      "
+
+    # Common volumes (overridden per environment)
+    volumes:
+      - ./secrets:/run/secrets:ro      
+      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
+      - ./config.tcl:${nsdconfig}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -H \"Host: localhost\" -f http://localhost:8080/SYSTEM/success.tcl || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+    # Common environment (overridden per environment)
+    environment:
+      <<:
+        - *default-env
+        - *db-env
+      LD_PRELOAD: ${LD_PRELOAD:-}
+      oacs_db_name: alter-dev
+      oacs_server: alter-dev
+      oacs_httpport: 8080
+      oacs_ipaddress: ${ipaddress}
+      oacs_loopbackport: ${internal_loopbackport:-8888}
+      oacs_serverroot: /var/www/openacs
+      oacs_certificate: ""
+      oacs_logdir: /var/www/openacs/log
+      oacs_reverseproxymode: true
+      oacs_tag: ${oacs_tag:-oacs-5-10}
+      oacs_clusterSecret: ${clusterSecret:-}
+      oacs_parameterSecret: ${parameterSecret:-}
+      oacs_smtphost: mailrelay
+      oacs_smtpport: 25
+      
+    networks:
+      - oacs-network
+
+  # ------------------------------------------------------------------
+  #  Nginx Reverse Proxy (Common)
+  # ------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/templates:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/mime.types:/etc/nginx/mime.types:ro
+      - nginx_cache:/var/cache/nginx
+      - nginx_logs:/var/log/nginx
+    
+    networks:
+      - oacs-network
+    
+    environment:
+      <<: *default-env
+      SERVER_NAME: localhost
+      BACKEND_HOST: alter-dev
+
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+# ------------------------------------------------------------------
+# Networks (Common)
+# ------------------------------------------------------------------
+networks:
+  oacs-network:
+    name: oacs-network
+    driver: bridge
+
+# ------------------------------------------------------------------
+# Volumes (Common)
+# ------------------------------------------------------------------
+volumes:
+  db_data:
+  oacs_secrets:
+  mail_spool:
+  mail_log:
+  alter-dev_data:
+  alter-dev_log:
+  oacs_certificates:
+  nginx_cache:
+  nginx_logs:

@@ -1,0 +1,5 @@
+Per fare in modo che l'invio email da openacs funzioni bisogna, dopo il primo avvio, impostare i parametri di acs_mail_lite:
+BounceDomain=dominio-che-invia-le-mail (in questo caso di prova gmail.com)
+SMTPHost=mailrelay
+
+In prospettiva sarà opportuno automatizzare l'operazione con uno script.

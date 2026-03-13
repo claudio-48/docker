@@ -1,0 +1,31 @@
+# Sender Relay Mapping Template (Postfix sender_relay)
+#
+# This is an EXAMPLE file. Copy to sender_relay and edit.
+#
+# Maps sender addresses to SMTP relay servers
+#
+# Format:
+#   sender@domain.com    [smtp.server.com]:port
+#
+# Use case:
+#   Different email addresses use different SMTP servers
+#
+# Steps:
+#   1. cp sender_relay.example sender_relay
+#   2. Edit sender_relay with real mappings
+#   3. chmod 600 sender_relay
+#   4. Never commit sender_relay to Git (it's in .gitignore)
+#
+# After editing, Postfix will automatically run:
+#   postmap lmdb:/etc/postfix/sender_relay
+#
+# Example entries:
+
+# Send from Gmail account
+noreply@yourdomain.com    [smtp.gmail.com]:587
+
+# Send from company email
+support@company.com       [smtp.office365.com]:587
+
+# Default relay for all other senders
+# (leave blank to use main relay)

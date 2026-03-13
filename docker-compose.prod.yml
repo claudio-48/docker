@@ -1,0 +1,66 @@
+# docker-compose.prod.yml - PRODUCTION OVERRIDE
+#
+# Override configuration for production environment
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+#   Or: ./compose.sh prod up
+
+services:
+
+  # ------------------------------------------------------------------
+  #  Database - Production Settings
+  # ------------------------------------------------------------------
+  db:
+    restart: always
+    
+    # Production: additional volume for import script
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./secrets:/run/secrets:ro
+      - ./db-scripts:/docker-entrypoint-initdb.d:ro
+      - ./db-dumps:/backup
+      - ./scripts/db-import.sh:/tmp/db-import.sh  # Production only
+
+    # Production: no port exposure (internal only)
+    # ports: []
+
+  # ------------------------------------------------------------------
+  #  Mail Relay - Production Settings
+  # ------------------------------------------------------------------
+  mailrelay:
+    restart: always
+
+  # ------------------------------------------------------------------
+  #  OpenACS - Production Settings
+  # ------------------------------------------------------------------
+  alter-dev:
+    restart: always
+
+    # Production: named volume + specific bind mounts
+    volumes:
+      - alter-dev_data:/var/www/openacs
+      - ./secrets:/run/secrets:ro
+      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
+      - /var/www/alter-dev/content-repository-fattura-elettronica:/var/www/openacs/content-repository-fattura-elettronica
+      - /var/www/alter-dev/content-repository-content-files:/var/www/openacs/content-repository-content-files
+      - /var/www/alter-dev/log:/var/www/openacs/log
+      - /var/www/alter-dev/www:/var/www/openacs/www
+      - ./config.tcl:${nsdconfig}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Production: no port exposure (only via nginx)
+    # ports: []
+
+    environment:
+      oacs_hostname: "docker.alter-web.it"  # Production domain
+      system_pkgs: ""  # Can add imagemagick, poppler-utils if needed
+
+  # ------------------------------------------------------------------
+  #  Nginx - Production Settings
+  # ------------------------------------------------------------------
+  nginx:
+    restart: always
+
+    environment:
+      SERVER_NAME: docker.alter-web.it 

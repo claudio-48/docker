@@ -1,0 +1,39 @@
+# OpenACS Production - Git Ignore
+
+# Backup files
+backups/
+*.sql
+*.sql.gz
+*.tar.gz
+*.dump
+*.dmp
+
+# Logs
+*.log
+logs/
+
+# Docker volumes (locali)
+volumes/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Node modules (se presenti)
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

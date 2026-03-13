@@ -1,0 +1,32 @@
+# SMTP Authentication Template (Postfix sasl_passwd)
+#
+# This is an EXAMPLE file. Copy to sasl_passwd and edit.
+#
+# Format:
+#   [smtp.server.com]:port username:password
+#
+# For Gmail with App Password:
+#   1. Enable 2FA on Google Account
+#   2. Generate App Password: https://myaccount.google.com/apppasswords
+#   3. Use app password (not your regular password)
+#
+# Steps:
+#   1. cp sasl_passwd.example sasl_passwd
+#   2. Edit sasl_passwd with real credentials
+#   3. chmod 600 sasl_passwd
+#   4. Never commit sasl_passwd to Git (it's in .gitignore)
+#
+# After editing, Postfix will automatically run:
+#   postmap lmdb:/etc/postfix/sasl_passwd
+#
+# Example entries:
+
+# Gmail (use app password, not regular password)
+[smtp.gmail.com]:587 your-email@gmail.com:your-16-char-app-password
+
+# Generic SMTP
+# [smtp.example.com]:587 username:password
+
+# Multiple servers (one per line)
+# [smtp.gmail.com]:587 user1@gmail.com:app-password-1
+# [smtp.office365.com]:587 user2@company.com:password-2
