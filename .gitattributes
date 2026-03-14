@@ -1,5 +1,6 @@
 .env filter=git-crypt diff=git-crypt
 secrets/psql_password filter=git-crypt diff=git-crypt
-nginx/ssl/*pem filter=git-crypt diff=git-crypt
+nginx/ssl/*key filter=git-crypt diff=git-crypt
+nginx/ssl/*crt filter=git-crypt diff=git-crypt
 postfix/sasl_passwd filter=git-crypt diff=git-crypt
 postfix/sender_relay filter=git-crypt diff=git-crypt

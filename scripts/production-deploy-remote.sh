@@ -183,24 +183,7 @@ create_backup() {
 # Deploy CVS
 deploy_cvs() {
     step "Deploy tramite CVS..."
-    
-    info "Setup chiavi SSH per CVS..."
-
-    # Copia files
-    ssh ${PROD_USER}@${PROD_SERVER} \
-        "docker cp ~/.ssh/id_ed25519 ${PROD_CONTAINER}:/tmp/cvs_key && \
-         docker cp ~/.ssh/known_hosts ${PROD_CONTAINER}:/tmp/known_hosts"
-    
-    # Setup nel container
-    ssh ${PROD_USER}@${PROD_SERVER} \
-        "docker exec ${PROD_CONTAINER} /bin/sh -c 'mkdir -p /home/nsadmin/.ssh && \
-         mv /tmp/cvs_key /home/nsadmin/.ssh/id_ed25519 && \
-         mv /tmp/known_hosts /home/nsadmin/.ssh/known_hosts && \
-         chmod 600 /home/nsadmin/.ssh/id_ed25519 && \
-         chmod 644 /home/nsadmin/.ssh/known_hosts && \
-         chown -R nsadmin:nsadmin /home/nsadmin/.ssh && \
-         chmod 700 /home/nsadmin/.ssh'"
-    
+       
     # CVS update
     info "Esecuzione CVS update..."
 
