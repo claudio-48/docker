@@ -90,7 +90,7 @@ services:
   #  OpenACS Instance - alter-dev (Common)
   # ------------------------------------------------------------------
   alter-dev:
-    image: claudio48/alter:1.2
+    image: claudio48/alter:1.3
 
     depends_on:
       db:

@@ -53,7 +53,8 @@ set defaultConfig {
     db_user	postgres
     db_host	localhost
     db_port	"5432"
-    db_password "ciao"
+    db_password ""
+    db_passwordfile "/run/secrets/psql_password"
     CookieNamespace ad_    
 }
 
@@ -128,6 +129,20 @@ ns_logctl severity "Debug(ns:driver)" $debug
 # Where are your pages going to live ?
 set pageroot                  ${serverroot}/www
 set directoryfile             "index.tcl index.adp index.html index.htm"
+
+#
+# In case we have a db_passwordfile, use the content of the file as
+# the database password. Can be used, e.g., for docker secrets.
+#
+if {$db_passwordfile ne "" && [file readable $db_passwordfile]} {
+    try {
+        set F [open $db_passwordfile]
+        set db_password [string trim [read $F]]
+    } finally {
+        close $F
+        unset F
+    }
+}
 
 #---------------------------------------------------------------------
 # Global server parameters
