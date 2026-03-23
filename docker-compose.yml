@@ -62,6 +62,7 @@ services:
       - ./postfix/sender_relay:/etc/postfix/sender_relay
       - ./postfix/sasl_passwd:/etc/postfix/sasl_passwd
       - ./postfix/main.cf:/etc/postfix/main.cf
+      - ./postfix/master.cf:/etc/postfix/master.cf      
     
     environment:
       - SERVER_HOSTNAME=mail.oacs.localhost
