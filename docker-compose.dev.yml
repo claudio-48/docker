@@ -40,8 +40,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
     # Development: direct port access for debugging
-    # ports:
-    #   - "127.0.0.1:8080:8080"
+    ports:
+      - "127.0.0.1:8080:8080"
 
     environment:
       oacs_hostname: alter-dev  # Simple hostname for dev

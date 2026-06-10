@@ -36,7 +36,7 @@ server {
     # Logs
     access_log /var/log/nginx/alter-dev-access.log;
     error_log /var/log/nginx/alter-dev-error.log;
-    
+
     location / {
     
         # Debug headers
