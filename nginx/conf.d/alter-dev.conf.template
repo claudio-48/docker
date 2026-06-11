@@ -38,6 +38,9 @@ server {
         add_header X-Debug-Host $host always;
         add_header X-Debug-Scheme $scheme always;
 
+        # 127.0.0.11 è il DNS interno fisso di Docker
+        resolver 127.0.0.11 valid=30s ipv6=off;
+
         # Usando una variabile, Nginx è costretto a consultare il resolver 
         # a runtime invece di fare il caching dell'IP all'avvio
         set $backend alter-dev;
