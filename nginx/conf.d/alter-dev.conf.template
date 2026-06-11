@@ -1,8 +1,3 @@
-upstream alter-dev_backend {
-    server ${BACKEND_HOST}:8080;
-    keepalive 32;
-}
-
 server {
     listen        80;
     server_name   ${SERVER_NAME};
@@ -38,11 +33,15 @@ server {
     error_log /var/log/nginx/alter-dev-error.log;
 
     location / {
-    
+
         # Debug headers
         add_header X-Debug-Host $host always;
         add_header X-Debug-Scheme $scheme always;
-	
-        proxy_pass http://alter-dev_backend;
+
+        # Usando una variabile, Nginx è costretto a consultare il resolver 
+        # a runtime invece di fare il caching dell'IP all'avvio
+        set $backend alter-dev;
+        
+        proxy_pass http://$backend:8080;
     }
   }
