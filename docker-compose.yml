@@ -145,6 +145,10 @@ services:
   # ------------------------------------------------------------------
   nginx:
     image: nginx:alpine
+
+    depends_on:
+      alter-dev:
+        condition: service_healthy
     
     ports:
       - "80:80"
