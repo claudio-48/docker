@@ -48,6 +48,30 @@ services:
       system_pkgs: ""  # No extra packages needed in dev
 
   # ------------------------------------------------------------------
+  #  OpenACS - Development Settings
+  # ------------------------------------------------------------------
+  alter:
+    hostname: alter
+    restart: unless-stopped
+
+    # Development: bind mount for live code editing
+    volumes:
+      - alter_data:/var/www/openacs
+      - ./secrets:/run/secrets:ro
+      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
+      - alter_log:/var/www/openacs/log
+      - ./config.tcl:${nsdconfig}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Development: direct port access for debugging
+    ports:
+      - "127.0.0.1:8081:8080"
+
+    environment:
+      oacs_hostname: alter  # Simple hostname for dev
+      system_pkgs: ""  # No extra packages needed in dev
+
+  # ------------------------------------------------------------------
   #  Nginx - Development Settings
   # ------------------------------------------------------------------
   nginx:

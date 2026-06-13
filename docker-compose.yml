@@ -141,6 +141,60 @@ services:
       - oacs-network
 
   # ------------------------------------------------------------------
+  #  OpenACS Instance - alter (Common)
+  # ------------------------------------------------------------------
+  alter:
+    image: claudio48/alter:latest
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    command: >
+      /bin/sh -c "
+        . /scripts/container-setup-openacs.sh \\
+        && /usr/local/ns/bin/nsd -i -t ${nsdconfig} -u nsadmin -g nsadmin
+      "
+
+    # Common volumes (overridden per environment)
+    volumes:
+      - ./secrets:/run/secrets:ro      
+      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
+      - ./config.tcl:${nsdconfig}:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -H \"Host: localhost\" -f http://localhost:8080/SYSTEM/success.tcl || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+    # Common environment (overridden per environment)
+    environment:
+      <<:
+        - *default-env
+        - *db-env
+      LD_PRELOAD: ${LD_PRELOAD:-}
+      oacs_db_name: alter
+      oacs_server: alter
+      oacs_httpport: 8080
+      oacs_ipaddress: ${ipaddress}
+      oacs_loopbackport: ${internal_loopbackport:-8888}
+      oacs_serverroot: /var/www/openacs
+      oacs_certificate: ""
+      oacs_logdir: /var/www/openacs/log
+      oacs_reverseproxymode: true
+      oacs_tag: ${oacs_tag:-oacs-5-10}
+      oacs_clusterSecret: ${clusterSecret:-}
+      oacs_parameterSecret: ${parameterSecret:-}
+      oacs_smtphost: mailrelay
+      oacs_smtpport: 25
+      
+    networks:
+      - oacs-network
+
+  # ------------------------------------------------------------------
   #  Nginx Reverse Proxy (Common)
   # ------------------------------------------------------------------
   nginx:
@@ -149,7 +203,9 @@ services:
     depends_on:
       alter-dev:
         condition: service_healthy
-    
+      alter:
+        condition: service_healthy
+
     ports:
       - "80:80"
       - "443:443"
@@ -167,8 +223,6 @@ services:
     
     environment:
       <<: *default-env
-      SERVER_NAME: localhost
-      BACKEND_HOST: alter-dev
 
     healthcheck:
       test: ["CMD", "nginx", "-t"]
@@ -184,7 +238,7 @@ networks:
     name: oacs-network
     driver: bridge
 
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------  
 # Volumes (Common)
 # ------------------------------------------------------------------
 volumes:
@@ -193,7 +247,8 @@ volumes:
   mail_spool:
   mail_log:
   alter-dev_data:
-  alter-dev_log:
+  alter_data:
+  alter_log:
   oacs_certificates:
   nginx_cache:
   nginx_logs:
