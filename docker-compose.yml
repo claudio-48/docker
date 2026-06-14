@@ -247,6 +247,7 @@ volumes:
   mail_spool:
   mail_log:
   alter-dev_data:
+  alter-dev_log:
   alter_data:
   alter_log:
   oacs_certificates:

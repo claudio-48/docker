@@ -1,6 +1,6 @@
 server {
     listen        80;
-    server_name   alter;
+    server_name   ${alter_server};
 
     # Health check endpoint per Nginx
     location /nginx-health {
@@ -15,7 +15,7 @@ server {
   server {
     listen 443 ssl;
     #http2 on;    
-    server_name alter;  
+    server_name ${alter_server};  
 
     # SSL certificates (self-signed per sviluppo)
     ssl_certificate /etc/nginx/ssl/alter.crt;
@@ -43,7 +43,7 @@ server {
 
         # Usando una variabile, Nginx è costretto a consultare il resolver 
         # a runtime invece di fare il caching dell'IP all'avvio
-        set $backend alter;
+        set $backend ${alter_server};
         
         proxy_pass http://$backend:8080;
     }

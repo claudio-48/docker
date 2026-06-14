@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
 
   # ------------------------------------------------------------------
-  #  OpenACS - Development Settings
+  #  alter-dev - Development Settings
   # ------------------------------------------------------------------
   alter-dev:
     hostname: alter-dev
@@ -48,7 +48,7 @@ services:
       system_pkgs: ""  # No extra packages needed in dev
 
   # ------------------------------------------------------------------
-  #  OpenACS - Development Settings
+  #  alter - Development Settings
   # ------------------------------------------------------------------
   alter:
     hostname: alter
@@ -78,4 +78,5 @@ services:
     restart: unless-stopped
 
     environment:
-      SERVER_NAME: alter-dev
+      alter_dev_server: alter-dev
+      alter_server:     alter
