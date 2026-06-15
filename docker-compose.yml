@@ -50,7 +50,7 @@ services:
       start_period: 30s
 
     networks:
-      - oacs-network
+      - back-net
 
   # ------------------------------------------------------------------
   #  Mail Relay - Postfix (Common)
@@ -77,7 +77,7 @@ services:
              exec /run.sh"
     
     networks:
-      - oacs-network
+      - back-net
     
     healthcheck:
       test: ["CMD", "postfix", "status"]
@@ -107,7 +107,7 @@ services:
       - ./secrets:/run/secrets:ro      
       - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
       - ./config.tcl:${nsdconfig}:ro
-      - /var/run/docker.sock:/var/run/docker.sock
+      #- /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
       test: ["CMD-SHELL", "curl -s -H \"Host: localhost\" -f http://localhost:8080/SYSTEM/success.tcl || exit 1"]
@@ -138,7 +138,8 @@ services:
       oacs_smtpport: 25
       
     networks:
-      - oacs-network
+      - back-net
+      - front-net
 
   # ------------------------------------------------------------------
   #  OpenACS Instance - alter (Common)
@@ -161,7 +162,7 @@ services:
       - ./secrets:/run/secrets:ro      
       - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
       - ./config.tcl:${nsdconfig}:ro
-      - /var/run/docker.sock:/var/run/docker.sock
+      #- /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
       test: ["CMD-SHELL", "curl -s -H \"Host: localhost\" -f http://localhost:8080/SYSTEM/success.tcl || exit 1"]
@@ -192,7 +193,8 @@ services:
       oacs_smtpport: 25
       
     networks:
-      - oacs-network
+      - back-net
+      - front-net
 
   # ------------------------------------------------------------------
   #  Nginx Reverse Proxy (Common)
@@ -219,7 +221,7 @@ services:
       - nginx_logs:/var/log/nginx
     
     networks:
-      - oacs-network
+      - front-net
     
     environment:
       <<: *default-env
@@ -234,9 +236,11 @@ services:
 # Networks (Common)
 # ------------------------------------------------------------------
 networks:
-  oacs-network:
-    name: oacs-network
-    driver: bridge
+  front-net:
+  
+  back-net:
+    # Rete interna e isolata per db, postfix e openacs
+    internal: true
 
 # ------------------------------------------------------------------  
 # Volumes (Common)
