@@ -15,8 +15,12 @@ services:
   db:
     restart: unless-stopped  # Less strict than prod
     
-    ports:
-      - "127.0.0.1:5433:5432"  # Different port to avoid conflict with dev (5432)
+    #ports:
+    #  - "127.0.0.1:5432:5432"
+
+    networks:
+      - back-net-staging
+
 
   # ------------------------------------------------------------------
   #  Mail Relay - Staging Settings
@@ -24,8 +28,11 @@ services:
   mailrelay:
     restart: unless-stopped
 
+    networks:
+      - back-net-staging
+
   # ------------------------------------------------------------------
-  #  alter-dev - Staging Settings
+  #  alter-dev-staging - Staging Settings
   # ------------------------------------------------------------------
   alter-dev:
     hostname: alter-dev-staging
@@ -33,21 +40,25 @@ services:
 
     # Staging: named volume like prod, but can switch to bind mount for testing
     volumes:
-      - alter-dev_data:/var/www/openacs
+      - alter-dev_data_staging:/var/www/openacs
       - ./secrets:/run/secrets:ro
       - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
       #- /var/www/alter-dev/content-repository-fattura-elettronica:/var/www/openacs/content-repository-fattura-elettronica
       #- /var/www/alter-dev/content-repository-content-files:/var/www/openacs/content-repository-content-files
-      - alter-dev_log:/var/www/openacs/log
+      - alter-dev_log_staging:/var/www/openacs/log
       - ./config.tcl:${nsdconfig}:ro
       - /var/run/docker.sock:/var/run/docker.sock
 
-    #ports:
+    #ports: 
     #  - "127.0.0.1:8080:8080"
 
     environment:
       oacs_hostname: "alter-dev-staging"  # Staging subdomain
       system_pkgs: ""
+
+    networks:
+      - back-net-staging
+      - front-net-staging
 
   # ------------------------------------------------------------------
   #  alter - Staging Settings
@@ -58,12 +69,12 @@ services:
 
     # Staging: named volume like prod, but can switch to bind mount for testing
     volumes:
-      - alter_data:/var/www/openacs
+      - alter_data_staging:/var/www/openacs
       - ./secrets:/run/secrets:ro
       - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
       #- /var/www/alter/content-repository-fattura-elettronica:/var/www/openacs/content-repository-fattura-elettronica
       #- /var/www/alter/content-repository-content-files:/var/www/openacs/content-repository-content-files
-      - alter_log:/var/www/openacs/log
+      - alter_log_staging:/var/www/openacs/log
       - ./config.tcl:${nsdconfig}:ro
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -74,6 +85,10 @@ services:
       oacs_hostname: "alter-staging"  # Staging subdomain
       system_pkgs: ""
 
+    networks:
+      - back-net-staging
+      - front-net-staging
+
   # ------------------------------------------------------------------
   #  Nginx - Staging Settings
   # ------------------------------------------------------------------
@@ -81,10 +96,29 @@ services:
     restart: unless-stopped
     
     # Staging: different ports to avoid conflict with dev/prod
-    ports:
-      - "8088:80"
-      - "8443:443"
+    ports: 
+      - "80:80"
+      - "443:443"
 
     environment:
       alter_dev_server: alter-dev-staging
       alter_server:     alter-staging
+
+    networks:
+      - front-net-staging
+
+# ------------------------------------------------------------------
+# Networks staging
+# ------------------------------------------------------------------<
+networks:
+  front-net-staging:
+  
+  back-net-staging:
+    # Rete interna e isolata per db, postfix e openacs
+    internal: true
+
+volumes:
+  alter-dev_data_staging:
+  alter-dev_log_staging:
+  alter_data_staging:
+  alter_log_staging:

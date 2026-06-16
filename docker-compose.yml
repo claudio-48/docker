@@ -27,7 +27,7 @@ services:
   #  PostgreSQL Database (Common)
   # ------------------------------------------------------------------
   db:
-    image: postgres:17.7
+    image: postgres:18-alpine
     hostname: postgres
 
     environment:
@@ -37,7 +37,7 @@ services:
       POSTGRES_DB: postgres
 
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql
       - ./secrets:/run/secrets:ro
       - ./db-scripts:/docker-entrypoint-initdb.d:ro
       - ./db-dumps:/backup
@@ -48,9 +48,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
-    networks:
-      - back-net
 
   # ------------------------------------------------------------------
   #  Mail Relay - Postfix (Common)
@@ -76,9 +73,7 @@ services:
              postmap lmdb:/etc/postfix/sasl_passwd &&
              exec /run.sh"
     
-    networks:
-      - back-net
-    
+   
     healthcheck:
       test: ["CMD", "postfix", "status"]
       interval: 30s
@@ -137,10 +132,6 @@ services:
       oacs_smtphost: mailrelay
       oacs_smtpport: 25
       
-    networks:
-      - back-net
-      - front-net
-
   # ------------------------------------------------------------------
   #  OpenACS Instance - alter (Common)
   # ------------------------------------------------------------------
@@ -192,10 +183,6 @@ services:
       oacs_smtphost: mailrelay
       oacs_smtpport: 25
       
-    networks:
-      - back-net
-      - front-net
-
   # ------------------------------------------------------------------
   #  Nginx Reverse Proxy (Common)
   # ------------------------------------------------------------------
@@ -219,10 +206,7 @@ services:
       - ./nginx/mime.types:/etc/nginx/mime.types:ro
       - nginx_cache:/var/cache/nginx
       - nginx_logs:/var/log/nginx
-    
-    networks:
-      - front-net
-    
+
     environment:
       <<: *default-env
 
@@ -232,16 +216,6 @@ services:
       timeout: 5s
       retries: 3
 
-# ------------------------------------------------------------------
-# Networks (Common)
-# ------------------------------------------------------------------
-networks:
-  front-net:
-  
-  back-net:
-    # Rete interna e isolata per db, postfix e openacs
-    internal: true
-
 # ------------------------------------------------------------------  
 # Volumes (Common)
 # ------------------------------------------------------------------
@@ -250,10 +224,6 @@ volumes:
   oacs_secrets:
   mail_spool:
   mail_log:
-  alter-dev_data:
-  alter-dev_log:
-  alter_data:
-  alter_log:
   oacs_certificates:
   nginx_cache:
   nginx_logs:
