@@ -18,18 +18,11 @@ services:
     #ports:
     #  - "127.0.0.1:5432:5432"
 
-    networks:
-      - back-net-staging
-
-
   # ------------------------------------------------------------------
   #  Mail Relay - Staging Settings
   # ------------------------------------------------------------------
   mailrelay:
     restart: unless-stopped
-
-    networks:
-      - back-net-staging
 
   # ------------------------------------------------------------------
   #  alter-dev-staging - Staging Settings
@@ -43,8 +36,6 @@ services:
       - alter-dev_data_staging:/var/www/openacs
       - ./secrets:/run/secrets:ro
       - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
-      #- /var/www/alter-dev/content-repository-fattura-elettronica:/var/www/openacs/content-repository-fattura-elettronica
-      #- /var/www/alter-dev/content-repository-content-files:/var/www/openacs/content-repository-content-files
       - alter-dev_log_staging:/var/www/openacs/log
       - ./config.tcl:${nsdconfig}:ro
       - /var/run/docker.sock:/var/run/docker.sock
@@ -55,10 +46,6 @@ services:
     environment:
       oacs_hostname: "alter-dev-staging"  # Staging subdomain
       system_pkgs: ""
-
-    networks:
-      - back-net-staging
-      - front-net-staging
 
   # ------------------------------------------------------------------
   #  alter - Staging Settings
@@ -76,7 +63,7 @@ services:
       #- /var/www/alter/content-repository-content-files:/var/www/openacs/content-repository-content-files
       - alter_log_staging:/var/www/openacs/log
       - ./config.tcl:${nsdconfig}:ro
-      - /var/run/docker.sock:/var/run/docker.sock
+      #- /var/run/docker.sock:/var/run/docker.sock
 
     #ports:
     #  - "127.0.0.1:8081:8080"
@@ -84,10 +71,6 @@ services:
     environment:
       oacs_hostname: "alter-staging"  # Staging subdomain
       system_pkgs: ""
-
-    networks:
-      - back-net-staging
-      - front-net-staging
 
   # ------------------------------------------------------------------
   #  Nginx - Staging Settings
@@ -103,19 +86,6 @@ services:
     environment:
       alter_dev_server: alter-dev-staging
       alter_server:     alter-staging
-
-    networks:
-      - front-net-staging
-
-# ------------------------------------------------------------------
-# Networks staging
-# ------------------------------------------------------------------<
-networks:
-  front-net-staging:
-  
-  back-net-staging:
-    # Rete interna e isolata per db, postfix e openacs
-    internal: true
 
 volumes:
   alter-dev_data_staging:

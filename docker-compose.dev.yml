@@ -17,17 +17,11 @@ services:
     ports:
       - "5432:5432"  # Expose for external tools (pgAdmin, DBeaver, etc.)
 
-    networks:
-      - back-net
-
   # ------------------------------------------------------------------
   #  Mail Relay - Development Settings
   # ------------------------------------------------------------------
   mailrelay:
     restart: unless-stopped
-
-    networks:
-      - back-net
 
   # ------------------------------------------------------------------
   #  alter-dev - Development Settings
@@ -53,10 +47,6 @@ services:
       oacs_hostname: alter-dev  # Simple hostname for dev
       system_pkgs: ""  # No extra packages needed in dev
 
-    networks:
-      - back-net
-      - front-net
-
   # ------------------------------------------------------------------
   #  alter - Development Settings
   # ------------------------------------------------------------------
@@ -81,10 +71,6 @@ services:
       oacs_hostname: alter  # Simple hostname for dev
       system_pkgs: ""  # No extra packages needed in dev
 
-    networks:
-      - back-net
-      - front-net
-
   # ------------------------------------------------------------------
   #  Nginx - Development Settings
   # ------------------------------------------------------------------
@@ -94,19 +80,6 @@ services:
     environment:
       alter_dev_server: alter-dev
       alter_server:     alter
-
-    networks:
-      - front-net
-
-# ------------------------------------------------------------------
-# Networks dev
-# ------------------------------------------------------------------
-networks:
-  front-net:
-  
-  back-net:
-    # Rete interna e isolata per db, postfix e openacs
-    internal: true
 
 volumes:
   alter_data_dev:

@@ -49,6 +49,9 @@ services:
       retries: 5
       start_period: 30s
 
+    networks:
+      - back-net
+
   # ------------------------------------------------------------------
   #  Mail Relay - Postfix (Common)
   # ------------------------------------------------------------------
@@ -73,16 +76,18 @@ services:
              postmap lmdb:/etc/postfix/sasl_passwd &&
              exec /run.sh"
     
-   
-    healthcheck:
+       healthcheck:
       test: ["CMD", "postfix", "status"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
+    networks:
+      - back-net
+      
   # ------------------------------------------------------------------
-  #  OpenACS Instance - alter-dev (Common)
+  #  alter-dev (Common)
   # ------------------------------------------------------------------
   alter-dev:
     image: claudio48/alter:latest
@@ -131,9 +136,13 @@ services:
       oacs_parameterSecret: ${parameterSecret:-}
       oacs_smtphost: mailrelay
       oacs_smtpport: 25
+
+    networks:
+      - back-net
+      - front-net
       
   # ------------------------------------------------------------------
-  #  OpenACS Instance - alter (Common)
+  #  alter (Common)
   # ------------------------------------------------------------------
   alter:
     image: claudio48/alter:latest
@@ -182,6 +191,10 @@ services:
       oacs_parameterSecret: ${parameterSecret:-}
       oacs_smtphost: mailrelay
       oacs_smtpport: 25
+
+    networks:
+      - back-net
+      - front-net
       
   # ------------------------------------------------------------------
   #  Nginx Reverse Proxy (Common)
@@ -216,6 +229,9 @@ services:
       timeout: 5s
       retries: 3
 
+    networks:
+      - front-net
+      
 # ------------------------------------------------------------------  
 # Volumes (Common)
 # ------------------------------------------------------------------
@@ -227,3 +243,13 @@ volumes:
   oacs_certificates:
   nginx_cache:
   nginx_logs:
+
+# ------------------------------------------------------------------
+# Networks
+# ------------------------------------------------------------------<
+networks:
+  front-net:
+  
+  back-net:
+    # Rete interna e isolata per db, postfix e openacs
+    internal: true
