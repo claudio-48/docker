@@ -76,7 +76,7 @@ services:
              postmap lmdb:/etc/postfix/sasl_passwd &&
              exec /run.sh"
     
-       healthcheck:
+    healthcheck:
       test: ["CMD", "postfix", "status"]
       interval: 30s
       timeout: 10s
