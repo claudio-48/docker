@@ -5,7 +5,6 @@ set -e
 DB_USER="postgres"
 
 # imposto array di database da creare/importare
-#dbn=("oacs-a" "oacs-b" "alter-dev")
 dbn=("alter-dev" "alter")
 
 for db in "${dbn[@]}"; do

@@ -21,6 +21,44 @@ x-db-env: &db-env
   oacs_db_port: ${db_port}
   oacs_db_passwordfile: /run/secrets/psql_password
 
+# Variabili OpenACS identiche per OGNI container
+x-oacs-common-env: &oacs-common-env
+  oacs_httpport: 8080
+  oacs_ipaddress: ${ipaddress}
+  oacs_loopbackport: ${internal_loopbackport:-8888}
+  oacs_serverroot: /var/www/openacs
+  oacs_logdir: /var/www/openacs/log
+  oacs_reverseproxymode: true
+  oacs_smtphost: mailrelay
+  oacs_smtpport: 25
+  system_pkgs: ""
+  
+# TEMPLATE BASE PER TUTTE LE ISTANZE OPENACS
+x-alter-template: &alter-template
+  image: claudio48/alter:latest
+  depends_on:
+    db:
+      condition: service_healthy
+  command: >
+    /bin/sh -c "
+    . /scripts/container-setup-openacs.sh \
+    && /usr/local/ns/bin/nsd -i -t ${nsdconfig} -u nsadmin -g nsadmin
+    "
+  # Volumi minimi comuni (config e segreti non legati ai dati persistenti dell'istanza)
+  volumes:
+    - ./secrets:/run/secrets:ro
+    - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
+    - ./config.tcl:${nsdconfig}:ro
+  healthcheck:
+    test: ["CMD-SHELL", "curl -s -H \"Host: localhost\" -f http://localhost:8080/SYSTEM/success.tcl || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 60s
+  networks:
+    - back-net
+    - front-net
+
 services:
 
   # ------------------------------------------------------------------
@@ -85,117 +123,25 @@ services:
 
     networks:
       - back-net
-      
+
   # ------------------------------------------------------------------
-  #  alter-dev (Common)
+  #  alter-dev - Common Settings
   # ------------------------------------------------------------------
   alter-dev:
-    image: claudio48/alter:latest
+    <<: *alter-template
 
-    depends_on:
-      db:
-        condition: service_healthy
-
-    command: >
-      /bin/sh -c "
-        . /scripts/container-setup-openacs.sh \\
-        && /usr/local/ns/bin/nsd -i -t ${nsdconfig} -u nsadmin -g nsadmin
-      "
-
-    # Common volumes (overridden per environment)
-    volumes:
-      - ./secrets:/run/secrets:ro      
-      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
-      - ./config.tcl:${nsdconfig}:ro
-      #- /var/run/docker.sock:/var/run/docker.sock
-
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s -H \"Host: localhost\" -f http://localhost:8080/SYSTEM/success.tcl || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-
-    # Common environment (overridden per environment)
     environment:
-      <<:
-        - *default-env
-        - *db-env
-      LD_PRELOAD: ${LD_PRELOAD:-}
-      oacs_db_name: alter-dev
-      oacs_server: alter-dev
-      oacs_httpport: 8080
-      oacs_ipaddress: ${ipaddress}
-      oacs_loopbackport: ${internal_loopbackport:-8888}
-      oacs_serverroot: /var/www/openacs
-      oacs_certificate: ""
-      oacs_logdir: /var/www/openacs/log
-      oacs_reverseproxymode: true
-      oacs_tag: ${oacs_tag:-oacs-5-10}
-      oacs_clusterSecret: ${clusterSecret:-}
-      oacs_parameterSecret: ${parameterSecret:-}
-      oacs_smtphost: mailrelay
-      oacs_smtpport: 25
+      <<: [*default-env, *db-env, *oacs-common-env]
 
-    networks:
-      - back-net
-      - front-net
-      
   # ------------------------------------------------------------------
-  #  alter (Common)
+  #  alter - Common Settings
   # ------------------------------------------------------------------
   alter:
-    image: claudio48/alter:latest
+    <<: *alter-template
 
-    depends_on:
-      db:
-        condition: service_healthy
-
-    command: >
-      /bin/sh -c "
-        . /scripts/container-setup-openacs.sh \\
-        && /usr/local/ns/bin/nsd -i -t ${nsdconfig} -u nsadmin -g nsadmin
-      "
-
-    # Common volumes (overridden per environment)
-    volumes:
-      - ./secrets:/run/secrets:ro      
-      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
-      - ./config.tcl:${nsdconfig}:ro
-      #- /var/run/docker.sock:/var/run/docker.sock
-
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s -H \"Host: localhost\" -f http://localhost:8080/SYSTEM/success.tcl || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-
-    # Common environment (overridden per environment)
     environment:
-      <<:
-        - *default-env
-        - *db-env
-      LD_PRELOAD: ${LD_PRELOAD:-}
-      oacs_db_name: alter
-      oacs_server: alter
-      oacs_httpport: 8080
-      oacs_ipaddress: ${ipaddress}
-      oacs_loopbackport: ${internal_loopbackport:-8888}
-      oacs_serverroot: /var/www/openacs
-      oacs_certificate: ""
-      oacs_logdir: /var/www/openacs/log
-      oacs_reverseproxymode: true
-      oacs_tag: ${oacs_tag:-oacs-5-10}
-      oacs_clusterSecret: ${clusterSecret:-}
-      oacs_parameterSecret: ${parameterSecret:-}
-      oacs_smtphost: mailrelay
-      oacs_smtpport: 25
+      <<: [*default-env, *db-env, *oacs-common-env]
 
-    networks:
-      - back-net
-      - front-net
-      
   # ------------------------------------------------------------------
   #  Nginx Reverse Proxy (Common)
   # ------------------------------------------------------------------

@@ -33,19 +33,13 @@ services:
     # Development: bind mount for live code editing
     volumes:
       - /var/www/alter-dev:/var/www/openacs
-      - ./secrets:/run/secrets:ro
-      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
       - /var/www/alter-dev/log:/var/www/openacs/log
-      - ./config.tcl:${nsdconfig}:ro
       - /var/run/docker.sock:/var/run/docker.sock
 
-    # Development: direct port access for debugging
-    ports:
-      - "127.0.0.1:8080:8080"
-
     environment:
-      oacs_hostname: alter-dev  # Simple hostname for dev
-      system_pkgs: ""  # No extra packages needed in dev
+      oacs_db_name: alter-dev
+      oacs_server: alter-dev
+      oacs_hostname: "alter-dev"
 
   # ------------------------------------------------------------------
   #  alter - Development Settings
@@ -57,19 +51,12 @@ services:
     # Development: bind mount for live code editing
     volumes:
       - alter_data_dev:/var/www/openacs
-      - ./secrets:/run/secrets:ro
-      - ${certificatesdir:-oacs_certificates}:/var/lib/naviserver/certificates
       - alter_log_dev:/var/www/openacs/log
-      - ./config.tcl:${nsdconfig}:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-
-    # Development: direct port access for debugging
-    ports:
-      - "127.0.0.1:8081:8080"
 
     environment:
-      oacs_hostname: alter  # Simple hostname for dev
-      system_pkgs: ""  # No extra packages needed in dev
+      oacs_db_name: alter
+      oacs_server: alter
+      oacs_hostname: "alter"
 
   # ------------------------------------------------------------------
   #  Nginx - Development Settings
